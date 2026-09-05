@@ -1,0 +1,71 @@
+import cv2
+import pytesseract
+import json
+import pandas as pd
+
+
+# Image Preprocessing
+def preprocess_image(image_path):
+
+    image = cv2.imread(image_path)
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    noise_removed = cv2.medianBlur(gray, 3)
+
+    _, binary = cv2.threshold(
+        noise_removed,
+        0,
+        255,
+        cv2.THRESH_BINARY + cv2.THRESH_OTSU
+    )
+
+    cv2.imwrite("processed_document.png", binary)
+
+    return "processed_document.png"
+
+
+# Information Extraction using OCR
+def extract_information(image_path):
+
+    text = pytesseract.image_to_string(image_path)
+
+    data = {
+        "Student_Name": "Extracted Student Name",
+        "Register_Number": "Extracted Register Number",
+        "Extracted_Text": text
+    }
+
+    return data
+
+
+# Output Generation
+def generate_output(data):
+
+    # JSON file
+    with open("extracted_data.json", "w") as file:
+        json.dump(data, file, indent=4)
+
+    # Excel file
+    df = pd.DataFrame([data])
+    df.to_excel("extracted_data.xlsx", index=False)
+
+    print("Output generated successfully")
+
+
+# Main Program
+
+print("=== Automated Information Extraction and Digitization System ===")
+
+document = input("Enter document image path: ")
+
+processed_file = preprocess_image(document)
+
+result = extract_information(processed_file)
+
+print("\nExtracted Information:")
+print(result)
+
+generate_output(result)
+
+print("\nDocument digitization completed!")
